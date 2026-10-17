@@ -1,0 +1,14 @@
+{
+  "name": "PulseDeck — Interactive Classroom",
+  "short_name": "PulseDeck",
+  "description": "Live classroom Q&A, polls, quizzes and student feedback.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f7fb",
+  "theme_color": "#5b4bdb",
+  "icons": [
+    { "src": "/pulse-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
