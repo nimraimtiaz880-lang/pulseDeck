@@ -231,3 +231,61 @@ export default function StudentApp() {
         return <div className="student-page"><header className="student-header"><a className="student-brand" href="/"><span className="student-brand-mark"><Activity size={20}/></span>PulseDeck</a><a className="student-host-link" href="/">Organizer sign in <ChevronRight size={15}/></a></header><main className="student-join-wrap"><div className="student-join-art"><span className="student-kicker"><Radio size={15}/> YOUR VOICE, LIVE</span><h1>Join the conversation.</h1><p>Ask questions, share your opinion and take part in live classroom activities from any device.</p><div className="student-feature-row"><span><MessageCircle size={16}/> Q&A</span><span><Vote size={16}/> Polls</span><span><Zap size={16}/> Quizzes</span></div><div className="student-orb student-orb-one"/><div className="student-orb student-orb-two"/></div><form className="student-join-card" onSubmit={joinEvent}><span className="student-small-label">JOIN AN EVENT</span><h2>Ready to participate?</h2><p>Enter the event code shared by your teacher or host.</p><label>Event code<input value={code} onChange={e => setCode(e.target.value)} placeholder="e.g. A8KD3Q" maxLength={12} required autoCapitalize="characters"/></label><label>Your display name<input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Your name" maxLength={40}/></label><button className="student-primary" type="submit" disabled={busy}>{busy ? 'Joining…' : <><LogIn size={17}/> Join event</>}</button>{error && <div className="student-error">{error}</div>}<div className="student-demo-note"><CircleHelp size={15}/><span>{isSupabaseConfigured ? 'Connect using your teacher’s active event code.' : 'Demo mode: enter <b>PULSE1</b> to try the student interface. Demo responses are not shared with the organizer.'}</span></div></form><footer className="student-footer">PulseDeck · Student experience</footer></main>{toast && <div className="student-toast"><Check size={16}/>{toast}</div>}</div>;
     return <div className="student-page"><header className="student-header"><a className="student-brand" href="/student"><span className="student-brand-mark"><Activity size={20}/></span>PulseDeck</a><div className="student-event-badge"><span className="student-live-dot"/> {demo ? 'LOCAL DEMO' : 'LIVE EVENT'}</div><button className="student-leave" onClick={() => { setEvent(null); setParticipantToken(''); setCode(''); setSubmitted([]); setAnswers({}); setQuizFeedback({}); setQuestions([]); setActivities([]); setResponses([]); setError(''); }}><ArrowLeft size={15}/> Leave event</button></header><main className="student-main"><div className="student-event-heading"><div><span className="student-small-label">YOU’RE PARTICIPATING IN</span><h1>{event.title}</h1><p>{event.description || 'Take part in the live session below.'}</p></div><div className="student-code-box"><small>EVENT CODE</small><b>{event.join_code}</b></div></div>{error && <div className="student-error student-error-wide">{error}<button onClick={() => setError('')}>Dismiss</button></div>}<div className="student-tabs">{['Q&A', 'Polls', 'Quiz', 'Surveys'].map((t) => <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>{t === 'Q&A' ? <MessageCircle size={17}/> : t === 'Polls' ? <Vote size={17}/> : t === 'Quiz' ? <Zap size={17}/> : <ClipboardList size={17}/>}<span>{t}</span>{t === 'Q&A' && <em>{questions.length}</em>}</button>)}</div>{tab === 'Q&A' ? <div className="student-columns"><section className="student-panel"><div className="student-panel-heading"><div><h2>Ask a question</h2><p>Questions may be reviewed by your teacher before appearing.</p></div><MessageCircle size={21}/></div><form className="student-ask-form" onSubmit={sendQuestion}><label>Your question<textarea value={questionText} onChange={e => setQuestionText(e.target.value)} rows={3} placeholder="What would you like to ask?" maxLength={500} required/></label><button className="student-primary" type="submit"><Send size={16}/> Submit question</button></form><div className="student-list-heading"><h2>Questions from the audience</h2><span>{questions.length} visible</span></div>{questions.slice().sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.votes - a.votes).map(q => <article className="student-question" key={q.id}><div className="student-question-body">{q.pinned && <span className="student-pinned">FEATURED BY HOST</span>}<p>{q.body}</p><small>{q.author_name} · {new Date(q.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small></div><button className="student-vote" onClick={() => void upvote(q)} aria-label="Upvote question"><span>↑</span><b>{q.votes}</b><small>Vote</small></button></article>)}{!questions.length && <div className="student-empty"><MessageCircle size={25}/><b>No questions yet</b><p>Be the first to ask something.</p></div>}</section><aside className="student-side-panel"><span className="student-side-icon"><Activity size={20}/></span><h3>Make your voice count</h3><p>Ask clearly, vote for questions you’d like the host to answer, and keep the discussion respectful.</p><div className="student-side-stat"><span>Visible questions</span><b>{questions.length}</b></div><div className="student-side-stat"><span>Activities available</span><b>{activities.length}</b></div><button className="student-secondary" onClick={() => setTab('Polls')}>Explore activities <ChevronRight size={16}/></button></aside></div> : <section className="student-activity-grid">{visibleActivities.map(activity => <article className="student-panel student-activity-card" key={activity.id}><div className="student-activity-top"><span className="student-activity-type">{activity.type.toUpperCase()}</span><span className="student-activity-live">ACTIVE</span></div><h2>{activity.title}</h2><p>{activity.prompt}</p><div className="student-options">{(activity.options || []).map(option => <label key={option} className={`student-option ${answers[activity.id] === option ? 'selected' : ''} ${submitted.includes(activity.id) ? 'locked' : ''}`}><input type="radio" name={activity.id} value={option} checked={answers[activity.id] === option} disabled={submitted.includes(activity.id)} onChange={() => setAnswers(old => ({ ...old, [activity.id]: option }))}/><span>{option}</span>{submitted.includes(activity.id) && <b>{responseCount(activity.id, option)}</b>}</label>)}</div>{submitted.includes(activity.id) ? <div className="student-submitted"><Check size={16}/> Response recorded</div> : <button className="student-primary" onClick={() => void sendAnswer(activity)}>Submit response <ChevronRight size={16}/></button>}{submitted.includes(activity.id) && activity.type === 'quiz' && quizFeedback[activity.id] && <div className={`student-submitted student-quiz-feedback ${quizFeedback[activity.id].correct ? 'is-correct' : 'is-incorrect'}`}><b>{quizFeedback[activity.id].correct ? 'Correct answer!' : 'Not quite — review the explanation below.'}</b>{quizFeedback[activity.id].explanation && <p>{quizFeedback[activity.id].explanation}</p>}</div>}{submitted.includes(activity.id) && <div className="student-results"><b>Current responses</b>{activity.options.map(option => <div className="student-result-row" key={option}><span>{option}</span><b>{responseCount(activity.id, option)}</b><i style={{ width: `${responses.filter(r => r.activity_id === activity.id).length ? responseCount(activity.id, option) / responses.filter(r => r.activity_id === activity.id).length * 100 : 0}%` }}/></div>)}</div>}</article>)}{!visibleActivities.length && <div className="student-panel student-empty"><ClipboardList size={25}/><b>No active {tab.toLowerCase()} right now</b><p>Your teacher has not launched one yet. Check again in a moment.</p><button className="student-secondary" onClick={() => event && void refresh(event.id)}><RefreshCw size={15}/> Refresh activities</button></div>}</section>}<footer className="student-main-footer">PulseDeck student view <span>•</span> {demo ? 'Local demo data' : 'Connected to the event backend'}</footer></main>{toast && <div className="student-toast"><Check size={16}/>{toast}</div>}</div>;
 }
+
+import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
+
+export default function StudentApp({ sessionId }) {
+  const [currentSlide, setCurrentSlide] = useState(1);
+
+  useEffect(() => {
+    // 1. Fetch initial slide state
+    async function fetchInitialSlide() {
+      const { data } = await supabase
+        .from('event_presentations')
+        .select('current_slide')
+        .eq('id', sessionId)
+        .single();
+      
+      if (data) setCurrentSlide(data.current_slide);
+    }
+
+    fetchInitialSlide();
+
+    // 2. Subscribe to real-time changes from the presenter
+    const channel = supabase
+      .channel('presentation_sync')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'event_presentations',
+          filter: `id=eq.${sessionId}`,
+        },
+        (payload) => {
+          if (payload.new && payload.new.current_slide) {
+            setCurrentSlide(payload.new.current_slide);
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId]);
+
+  return (
+    <div className="student-container">
+      <h2>Live Presentation</h2>
+      <div className="slide-view">
+        {/* Render content based on the live slide number */}
+        <p>Currently viewing: <strong>Slide {currentSlide}</strong></p>
+      </div>
+    </div>
+  );
+}
