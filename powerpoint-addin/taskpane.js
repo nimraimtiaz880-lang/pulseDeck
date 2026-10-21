@@ -1,19 +1,84 @@
-/* Set this to your deployed PulseDeck API URL. For local development, use a local HTTPS tunnel. */
-const PULSEDECK_API = 'https://YOUR-PULSEDECK-DOMAIN/api/lecture/generate';
-Office.onReady(() => {
-  document.getElementById('readSelection').addEventListener('click', () => {
-    Office.context.document.getSelectedDataAsync(Office.CoercionType.Text, result => {
-      if (result.status === Office.AsyncResultStatus.Succeeded && result.value) {
-        const field=document.getElementById('lecture'); field.value=(field.value+'\n'+result.value).trim(); document.getElementById('status').textContent='Selected text added. Note: this reads selected text, not the entire deck automatically.';
-      } else document.getElementById('status').textContent='Select text on a slide first, then try again.';
-    });
-  });
-  document.getElementById('generate').addEventListener('click', async () => {
-    const content=document.getElementById('lecture').value.trim();
-    if(!content){document.getElementById('status').textContent='Select slide text or paste lecture content first.';return;}
-    if(PULSEDECK_API.includes('YOUR-PULSEDECK-DOMAIN')){document.getElementById('status').textContent='Setup needed: edit taskpane.js and set PULSEDECK_API to your deployed PulseDeck endpoint.';return;}
-    document.getElementById('status').textContent='Generating…';
-    try{const r=await fetch(PULSEDECK_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:'PowerPoint lecture',action:document.getElementById('action').value,content})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Request failed');document.getElementById('output').value=d.output||'';document.getElementById('status').textContent='Draft ready. Review it before use.';}catch(e){document.getElementById('status').textContent='Could not connect: '+e.message;}
-  });
-  document.getElementById('copy').addEventListener('click', async()=>{try{await navigator.clipboard.writeText(document.getElementById('output').value);document.getElementById('status').textContent='Draft copied.';}catch(e){document.getElementById('status').textContent='Select and copy the draft manually.';}});
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentSessionId = null;
+
+Office.onReady((info) => {
+  if (info.host === Office.HostType.PowerPoint) {
+    document.getElementById('app-body').style.display = 'flex';
+    document.getElementById('start-session-btn').onclick = startSyncSession;
+  }
 });
+
+async function startSyncSession() {
+  const sessionCode = document.getElementById('session-code-input').value.trim();
+  if (!sessionCode) {
+    alert('Please enter a session code');
+    return;
+  }
+
+  // Find the presentation session in Supabase
+  const { data, error } = await supabase
+    .from('event_presentations')
+    .select('id')
+    .eq('session_code', sessionCode)
+    .single();
+
+  if (error || !data) {
+    alert('Session not found. Check your session code.');
+    return;
+  }
+
+  currentSessionId = data.id;
+  document.getElementById('status-badge').innerText = 'Connected & Live';
+
+  // Listen for slide changes in PowerPoint
+  Office.context.document.addHandlerAsync(
+    Office.EventType.DocumentSelectionChanged,
+    onSlideSelectionChanged
+  );
+
+  broadcastCurrentSlide();
+}
+
+function onSlideSelectionChanged() {
+  PowerPoint.run(async (context) => {
+    const selectedSlides = context.presentation.getSelectedSlides();
+    selectedSlides.load('items');
+    await context.sync();
+
+    if (selectedSlides.items.length > 0) {
+      const activeSlide = selectedSlides.items[0];
+      activeSlide.load('id');
+      await context.sync();
+
+      const slides = context.presentation.slides;
+      slides.load('items');
+      await context.sync();
+
+      const slideIndex = slides.items.findIndex(s => s.id === activeSlide.id) + 1;
+      
+      if (slideIndex > 0) {
+        await updateSlideInSupabase(slideIndex);
+      }
+    }
+  });
+}
+
+async function updateSlideInSupabase(slideNumber) {
+  if (!currentSessionId) return;
+
+  await supabase
+    .from('event_presentations')
+    .update({ 
+      current_slide: slideNumber,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', currentSessionId);
+
+  document.getElementById('active-slide-label').innerText = `Slide ${slideNumber}`;
+}
