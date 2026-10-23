@@ -440,7 +440,6 @@ function App() {
 
  </div></main>
 
-
  {showJoinScreen && activeEvent && <div className="join-screen-backdrop" role="dialog" aria-modal="true" aria-label="Classroom join screen" onMouseDown={e => { if (e.target === e.currentTarget) setShowJoinScreen(false); }}><section className="join-screen-card"><button className="join-screen-close" onClick={() => setShowJoinScreen(false)} aria-label="Close join screen"><X size={22}/></button><span className="join-screen-eyebrow">PULSEDECK · JOIN CLASS</span><h1>{activeEvent.title}</h1><p className="join-screen-instruction">Open your phone camera and scan this code</p><div className="join-screen-qr">{joinQrData ? <img src={joinQrData} alt={`Large QR code to join ${activeEvent.title}`} /> : <p>Preparing QR code…</p>}</div><div className="join-screen-code"><span>OR ENTER THIS CODE</span><strong>{activeEvent.join_code}</strong></div><a className="join-screen-url" href={joinUrl} target="_blank" rel="noreferrer">{joinUrl}</a><div className="join-screen-actions"><button className="primary" onClick={downloadJoinQr} disabled={!joinQrData}><Download size={17}/> Download QR (PNG)</button><button className="secondary" onClick={() => { void navigator.clipboard?.writeText(joinUrl); notify('Join link copied'); }}><Link2 size={17}/> Copy join link</button></div><p className="join-screen-tip">Tip: keep this screen open while presenting, or download the QR image and add it to your existing slides.</p></section></div>}
 
  {showCreate && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget)
