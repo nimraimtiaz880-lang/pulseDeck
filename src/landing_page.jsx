@@ -214,7 +214,6 @@ export default function LandingPage({ onGetStarted, onJoinEvent, onSignIn, }) {
           Get started <span aria-hidden="true">→</span>
         </button>
       </section>
-
       <footer className="pulse-footer">
         <a className="pulse-brand" href="#home">
           <span className="pulse-brand-mark">P</span>
