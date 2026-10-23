@@ -133,6 +133,7 @@ language sql stable security definer set search_path='' as $$
 $$;
 revoke all on function public.event_response_counts(uuid) from public;
 grant execute on function public.event_response_counts(uuid) to anon,authenticated;
+
 -- Realtime: owner updates; participant clients also poll as a fallback.
 do $$ begin
  alter publication supabase_realtime add table public.events;

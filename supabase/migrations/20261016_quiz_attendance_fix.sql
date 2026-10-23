@@ -152,4 +152,5 @@ end;
 $$;
 revoke all on function public.event_attendance_summary(uuid) from public;
 grant execute on function public.event_attendance_summary(uuid) to authenticated;
+
 notify pgrst, 'reload schema';
