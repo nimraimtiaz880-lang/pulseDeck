@@ -1,1 +1,40 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PulseDeck for PowerPoint</title><link rel="stylesheet" href="taskpane.css"><script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script></head><body><header><div class="mark">P</div><div><b>PulseDeck</b><small>Lecture assistant</small></div></header><main><p class="eyebrow">FROM YOUR PRESENTATION</p><h1>What do you need?</h1><p class="hint">Select text on a slide, then use “Read selected text”, or paste lecture notes below.</p><button id="readSelection">Read selected text</button><label for="lecture">Lecture text</label><textarea id="lecture" rows="10" placeholder="Select text in PowerPoint or paste slide content…"></textarea><label for="action">Create</label><select id="action"><option value="summary">Lecture summary</option><option value="quiz">Quiz</option><option value="scenario">Scenario activity</option><option value="discussion">Discussion prompts</option><option value="poll">Class poll</option></select><button class="primary" id="generate">Generate with PulseDeck</button><p id="status" role="status"></p><textarea id="output" rows="12" placeholder="Your editable draft will appear here…"></textarea><button id="copy">Copy draft</button><p class="footnote">Review content before sharing. Configure the API URL in taskpane.js for your deployed PulseDeck instance.</p></main><script src="taskpane.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PulseDeck for PowerPoint</title>
+  <link rel="stylesheet" href="taskpane.css">
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+</head>
+<body>
+  <header><div class="mark">P</div><div><b>PulseDeck</b><small>PowerPoint companion</small></div><span class="tag">BETA</span></header>
+  <main>
+    <p class="eyebrow">FROM YOUR PRESENTATION</p>
+    <h1>Turn slides into engagement</h1>
+    <p class="hint">Select text on a slide and add it below, or paste lecture notes. Create an editable draft, then send it to your PulseDeck dashboard to publish as a live activity.</p>
+    <label for="title">Lecture title</label>
+    <input id="title" type="text" placeholder="e.g. Introduction to Databases">
+    <button id="readSelection" class="secondary">＋ Read selected slide text</button>
+    <label for="lecture">Lecture / slide text</label>
+    <textarea id="lecture" rows="9" placeholder="Select text in PowerPoint, or paste slide content here…"></textarea>
+    <label for="action">Create</label>
+    <select id="action">
+      <option value="summary">Lecture summary</option>
+      <option value="quiz">Quiz questions</option>
+      <option value="scenario">Scenario activity</option>
+      <option value="discussion">Discussion prompts</option>
+      <option value="poll">Class poll</option>
+    </select>
+    <button class="primary" id="generate">Generate editable draft</button>
+    <p id="status" role="status" aria-live="polite">Ready when you are.</p>
+    <label for="output">Review and edit the draft</label>
+    <textarea id="output" rows="12" placeholder="Your draft appears here…"></textarea>
+    <div class="button-row"><button id="copy" class="secondary">Copy draft</button><button id="download" class="secondary">Download handoff JSON</button></div><button id="clear" class="secondary">Clear</button>
+    <button class="primary send" id="send">Send to PulseDeck dashboard ↗</button>
+    <a id="openDashboard" href="/dashboard" target="_blank" rel="noreferrer" hidden>Open PulseDeck</a>
+    <p class="footnote">Drafts use a local template and your extracted text; they are not verified AI answers. Review the content. Quiz answer keys must be confirmed in PulseDeck before publishing. The handoff requires this task pane and PulseDeck to share the same website origin.</p>
+  </main>
+  <script src="taskpane.js"></script>
+</body>
+</html>
