@@ -65,7 +65,7 @@ VITE_SUPABASE_ANON_KEY=your-public-anon-key
 ## Live deployment — required
 
 1. Create a **Supabase** project and enable Email authentication (Authentication → Providers → Email).
-2. In its **SQL Editor**, run `supabase/migrations/20261014_pulsedeck.sql` first, then `supabase/migrations/20261016_quiz_scoring.sql`. The first migration creates the core tables, access policies, join/vote/report functions and Realtime publications. The second adds private quiz answer keys and server-side quiz scoring.
+2. In its **SQL Editor**, run `supabase/migrations/20261014_pulsedeck.sql` first, then `supabase/migrations/20261016_quiz_scoring.sql`, `supabase/migrations/20261016_quiz_attendance_fix.sql`, and finally `supabase/migrations/20261023_activity_attendance_repair.sql`. The last migration repairs activity visibility/permissions, public aggregate response counts, quiz submission, and participant attendance for existing deployments.
 3. Copy `.env.example` to `.env.local`; fill `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with the public project URL and publishable/anon key. **Never use the service-role secret in frontend code.**
 4. Run `npm install` followed by `npm run build`. Resolve any errors before publishing.
 5. Deploy on **Vercel** or **Netlify** with the same two environment variables defined in the hosting dashboard. The package includes SPA rewrites for `/student` and `/dashboard`.
@@ -75,9 +75,9 @@ VITE_SUPABASE_ANON_KEY=your-public-anon-key
 ### Production limitations to know
 
 - This application **cannot be considered live without a connected and provisioned Supabase project**; missing environment variables fall back to **local-only demo mode**.
-- Live questions must be approved before audience visibility. Activity and response updates use realtime subscriptions; student view also refreshes every five seconds.
+- Live questions must be approved before audience visibility. Activity and response updates use realtime subscriptions with polling fallbacks; student activities refresh every seven seconds and attendance heartbeats run every twenty seconds.
 - This starter uses anonymous per-event browser tokens to reduce duplicate responses from one browser, but has **no server-side rate limit or identity verification**; add abuse prevention before public internet traffic.
-- Multiple-choice quizzes now support a teacher-defined correct option, optional explanation, and immediate student feedback. The cloud setup requires running both SQL migrations in order. One-response-per-activity is enforced with an anonymous per-event browser token in the database. This reduces duplicate submissions from the same browser, but it is not identity verification and does not replace server-side rate limiting before a public production launch. Team invitations, third-party integrations, and participant attendance analytics are not implemented; their UI is informational.
+- Multiple-choice quizzes now support a teacher-defined correct option, optional explanation, and immediate student feedback. The cloud setup requires running both SQL migrations in order. One-response-per-activity is enforced with an anonymous per-event browser token in the database. This reduces duplicate submissions from the same browser, but it is not identity verification and does not replace server-side rate limiting before a public production launch. Team invitations and third-party integrations are not implemented. Attendance counts are based on per-event browser/device tokens and recent heartbeats, not verified student identity.
 - Never use real sensitive student data before you review your privacy policy, moderation policy and security requirements.
 
 
@@ -120,3 +120,30 @@ The teacher's “Present now” number means a participant browser checked in wi
 
 ## New dependencies
 Run `npm install` after extracting the updated project to install `jszip` and `pdfjs-dist` used for client-side PowerPoint/PDF text extraction.
+
+
+### Activity visibility and attendance repair (October 23, 2026)
+
+For an existing live deployment, run `supabase/migrations/20261023_activity_attendance_repair.sql` in the Supabase SQL Editor after the base schema, quiz scoring, and attendance migrations. This migration is safe to re-run and keeps Row Level Security enabled. It re-establishes owner/public activity policies, adds the response token column, restores the aggregate results RPC, repairs quiz submission, and creates the participant heartbeat/attendance functions. Then redeploy the updated app so the dashboard polling and visible error messages are included.
+
+If a teacher or student still sees an error, read the exact message shown in the UI and check Supabase SQL Editor → Logs. Do not use the service-role key in the browser.
+
+## PowerPoint integration
+
+The dashboard now includes **PowerPoint Integration** in the sidebar. The companion Office task pane is served from `public/powerpoint-addin/` and its manifest is available at `/powerpoint-addin/manifest.xml`.
+
+### What works
+- Read text selected on a PowerPoint slide (when running inside PowerPoint), and append text from multiple slides.
+- Paste lecture text when selected-text access is unavailable.
+- Create editable local/template drafts for a summary, quiz, scenario, discussion prompts, or poll without requiring an AI API key.
+- Copy the draft, or send the slide text and draft to the PulseDeck dashboard using same-origin localStorage handoff.
+- Review the imported content and use the dashboard's activity builder to create a live poll, survey, or quiz for the selected event. Quiz answer keys must be reviewed and selected by the teacher.
+
+### Install the Office add-in
+1. Deploy the site over HTTPS at the domain configured in `public/powerpoint-addin/manifest.xml`.
+2. In PowerPoint, open the Office Add-ins / My Add-ins interface and use the supported manifest upload or sideload option for your Microsoft 365 version.
+3. Select the PulseDeck PowerPoint Companion add-in to open its task pane.
+4. Select slide text, click **Read selected slide text**, choose a draft type, click **Generate editable draft**, then **Send to PulseDeck dashboard**.
+5. Sign in to PulseDeck if prompted, verify the imported content, choose a live session, and publish the activity from the activity builder.
+
+The manifest currently points to `https://pulsedeck0.netlify.app`. If the production site uses another domain, update the URLs in both `public/powerpoint-addin/manifest.xml` and `powerpoint-addin/manifest.xml` before deploying. This add-in uses transparent template-based drafts, not verified AI generation. It does not insert generated text directly into slide shapes, and selected-text access depends on the PowerPoint host and supported Office APIs. Organizational sideloading may require Microsoft 365 administrator approval.
