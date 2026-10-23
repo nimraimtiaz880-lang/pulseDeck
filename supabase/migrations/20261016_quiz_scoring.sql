@@ -76,6 +76,5 @@ begin
   return query select selected_option = correct_value, coalesce(explanation_value, '');
 end;
 $$;
-
 revoke all on function public.submit_quiz_answer(uuid, text, uuid, text) from public;
 grant execute on function public.submit_quiz_answer(uuid, text, uuid, text) to anon, authenticated;
