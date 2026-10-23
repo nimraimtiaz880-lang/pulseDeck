@@ -26,7 +26,6 @@ function getParticipantToken(eventId) {
     return crypto.randomUUID();
   }
 }
-
 export default function StudentApp() {
     const [code, setCode] = useState(() => new URLSearchParams(window.location.search).get('code')?.toUpperCase() || '');
     const [nickname, setNickname] = useState('Student');
