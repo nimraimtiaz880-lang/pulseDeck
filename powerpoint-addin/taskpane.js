@@ -1,6 +1,5 @@
 /* PulseDeck PowerPoint task pane.
  * The task pane is hosted on the same HTTPS origin as PulseDeck so a draft can
- * be handed to the signed-in dashboard through same-origin localStorage.
  * Draft generation is local/template-based; it does not require an API key.
  */
 (() => {
